@@ -57,11 +57,12 @@ int main(int argc, char** argv) {
     if (!getenv("XDG_RUNTIME_DIR"))
         throwError("XDG_RUNTIME_DIR is not set!");
 
-    // export HYPRLAND_CMD
+    // export AP0G33_CMD (+ HYPRLAND_CMD for compat)
     std::string cmd = argv[0];
     for (int i = 1; i < argc; ++i)
         cmd += std::string(" ") + argv[i];
 
+    setenv("AP0G33_CMD", cmd.c_str(), 1);
     setenv("HYPRLAND_CMD", cmd.c_str(), 1);
     setenv("XDG_BACKEND", "wayland", 1);
     setenv("XDG_SESSION_TYPE", "wayland", 1);

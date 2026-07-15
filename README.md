@@ -8,10 +8,26 @@ Based on Hyprland **0.55.0**.
 
 ## What's different from upstream
 
-- Binary is installed as `AP0G33` (with `Hyprland` and `hyprland` compat symlinks)
-- Branding: greeting, `--version` output, session entry name
-- `install-kali.sh`: one-shot build/install for Kali Rolling / Debian testing
-- **Everything else is stock Hyprland**: config lives in `~/.config/hypr/`, `hyprctl` / `hyprpm` keep their names, IPC sockets and `XDG_CURRENT_DESKTOP` are unchanged — so waybar, wlogout, xdg-desktop-portal-hyprland and the rest of the ecosystem work as-is
+Full rebrand — AP0G33 names everywhere, with legacy compat shims so the Hyprland ecosystem keeps working:
+
+| | AP0G33 (primary) | Legacy compat |
+|---|---|---|
+| Compositor binary | `AP0G33` | `Hyprland`, `hyprland` symlinks |
+| Control tool | `ap0g33ctl` | `hyprctl` symlink |
+| Plugin manager | `ap0g33pm` | `hyprpm` symlink |
+| Launcher | `start-ap0g33` | `start-hyprland` symlink |
+| Config | `~/.config/ap0g33/ap0g33.{lua,conf}` | `~/.config/hypr/` still read if present |
+| Config env var | `AP0G33_CONFIG` | `HYPRLAND_CONFIG` still honored |
+| IPC/runtime dir | `$XDG_RUNTIME_DIR/ap0g33` | `hypr` symlink created at startup |
+| Instance env var | `AP0G33_INSTANCE_SIGNATURE` | `HYPRLAND_INSTANCE_SIGNATURE` also exported |
+| Toggles | `AP0G33_NO_RT`, `AP0G33_TRACE`, ... | `HYPRLAND_*` equivalents still work |
+| Desktop identity | `XDG_CURRENT_DESKTOP=AP0G33` | `ap0g33-portals.conf` + `hyprland-portals.conf` installed |
+| Session entries | `ap0g33.desktop`, `ap0g33-uwsm.desktop` | — |
+| Crash reports / logs | `~/.cache/ap0g33/`, `ap0g33.log` | — |
+
+Because the instance signature is exported under both names and the legacy socket path is symlinked, waybar, wlogout, hyprpaper, xdg-desktop-portal-hyprland and plugins work unchanged.
+
+Also: `install-kali.sh`, a one-shot build/install for Kali Rolling / Debian testing.
 
 ## Install (Kali Rolling)
 
@@ -28,13 +44,13 @@ The script:
 3. Builds the hypr* stack from source: `hyprwayland-scanner`, `hyprutils`, `hyprlang`, `hyprcursor`, `hyprgraphics`, `aquamarine`
 4. Builds and installs AP0G33 to `/usr/local`
 
-Then pick **AP0G33** in your display manager, or run `Hyprland` / `AP0G33` from a TTY.
+Then pick **AP0G33** in your display manager, or run `AP0G33` from a TTY.
 
 ## Post-install
 
-- Config: `~/.config/hypr/hyprland.conf` (a default is generated on first launch — Hyprland wiki applies 1:1)
+- Config: `~/.config/ap0g33/ap0g33.lua` (a default is generated on first launch); an existing `~/.config/hypr/` setup is picked up automatically
 - Recommended extras: `sudo apt install waybar wofi kitty xdg-desktop-portal-wlr grim slurp wl-clipboard`
-- All [Hyprland wiki](https://wiki.hypr.land/) docs apply; only the binary name differs
+- All [Hyprland wiki](https://wiki.hypr.land/) docs apply; substitute `ap0g33ctl` for `hyprctl` (or keep using the `hyprctl` symlink)
 
 ## Uninstall
 

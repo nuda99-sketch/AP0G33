@@ -1444,13 +1444,18 @@ void IHyprRenderer::requestBackgroundResource() {
 std::string IHyprRenderer::resolveAssetPath(const std::string& filename) {
     std::string fullPath;
     for (auto& e : ASSET_PATHS) {
-        std::string     p = std::string{e} + "/hypr/" + filename;
-        std::error_code ec;
-        if (std::filesystem::exists(p, ec)) {
-            fullPath = p;
+        // AP0G33: prefer ap0g33 asset dir, fall back to legacy hypr dir
+        for (const auto& dir : {"/ap0g33/", "/hypr/"}) {
+            std::string     p = std::string{e} + dir + filename;
+            std::error_code ec;
+            if (std::filesystem::exists(p, ec)) {
+                fullPath = p;
+                break;
+            } else
+                Log::logger->log(Log::DEBUG, "resolveAssetPath: looking at {} unsuccessful: ec {}", filename, ec.message());
+        }
+        if (!fullPath.empty())
             break;
-        } else
-            Log::logger->log(Log::DEBUG, "resolveAssetPath: looking at {} unsuccessful: ec {}", filename, ec.message());
     }
 
     if (fullPath.empty()) {

@@ -175,12 +175,17 @@ std::string CShaderLoader::loadShader(const std::string& filename) {
     }
     const auto home = Hyprutils::Path::getHome();
     if (home.has_value()) {
-        const auto src = NFsUtils::readFileAsString(home.value() + "/hypr/shaders/" + filename);
+        // AP0G33: prefer ap0g33 config dir, fall back to legacy hypr dir
+        auto src = NFsUtils::readFileAsString(home.value() + "/ap0g33/shaders/" + filename);
+        if (!src.has_value())
+            src = NFsUtils::readFileAsString(home.value() + "/hypr/shaders/" + filename);
         if (src.has_value())
             return src.value();
     }
     for (auto& e : ASSET_PATHS) {
-        const auto src = NFsUtils::readFileAsString(std::string{e} + "/hypr/shaders/" + filename);
+        auto src = NFsUtils::readFileAsString(std::string{e} + "/ap0g33/shaders/" + filename);
+        if (!src.has_value())
+            src = NFsUtils::readFileAsString(std::string{e} + "/hypr/shaders/" + filename);
         if (src.has_value())
             return src.value();
     }

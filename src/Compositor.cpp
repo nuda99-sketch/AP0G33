@@ -189,9 +189,9 @@ CCompositor::CCompositor(bool onlyConfig) : m_onlyConfigVerification(onlyConfig)
 
     setMallocThreshold();
 
-    m_hyprTempDataRoot = std::string{getenv("XDG_RUNTIME_DIR")} + "/hypr";
+    m_hyprTempDataRoot = std::string{getenv("XDG_RUNTIME_DIR")} + "/ap0g33";
 
-    if (m_hyprTempDataRoot.starts_with("/hypr")) {
+    if (m_hyprTempDataRoot.starts_with("/ap0g33")) {
         std::println("Bailing out, $XDG_RUNTIME_DIR is invalid");
         throw std::runtime_error("CCompositor() failed");
     }
@@ -205,13 +205,22 @@ CCompositor::CCompositor(bool onlyConfig) : m_onlyConfigVerification(onlyConfig)
 
     m_instanceSignature = std::format("{}_{}_{}", GIT_COMMIT_HASH, std::time(nullptr), distribution(engine));
 
-    setenv("HYPRLAND_INSTANCE_SIGNATURE", m_instanceSignature.c_str(), true);
+    setenv("AP0G33_INSTANCE_SIGNATURE", m_instanceSignature.c_str(), true);
+    setenv("HYPRLAND_INSTANCE_SIGNATURE", m_instanceSignature.c_str(), true); // compat: hyprland ecosystem tools
 
     if (!std::filesystem::exists(m_hyprTempDataRoot))
         mkdir(m_hyprTempDataRoot.c_str(), S_IRWXU);
     else if (!std::filesystem::is_directory(m_hyprTempDataRoot)) {
         std::println("Bailing out, {} is not a directory", m_hyprTempDataRoot);
         throw std::runtime_error("CCompositor() failed");
+    }
+
+    // AP0G33 compat: symlink $XDG_RUNTIME_DIR/hypr -> ap0g33 so hyprland ecosystem tools find our sockets
+    {
+        const auto        LEGACY_ROOT = std::string{getenv("XDG_RUNTIME_DIR")} + "/hypr";
+        std::error_code   ec;
+        if (!std::filesystem::exists(std::filesystem::symlink_status(LEGACY_ROOT, ec)))
+            std::filesystem::create_directory_symlink(m_hyprTempDataRoot, LEGACY_ROOT, ec);
     }
 
     m_instancePath = m_hyprTempDataRoot + "/" + m_instanceSignature;
@@ -416,7 +425,7 @@ void CCompositor::initServer(std::string socketName, int socketFd) {
 
     setenv("WAYLAND_DISPLAY", m_wlDisplaySocket.c_str(), 1);
     if (!getenv("XDG_CURRENT_DESKTOP")) {
-        setenv("XDG_CURRENT_DESKTOP", "Hyprland", 1);
+        setenv("XDG_CURRENT_DESKTOP", "AP0G33", 1);
         m_desktopEnvSet = true;
     }
 
@@ -530,9 +539,11 @@ void CCompositor::cleanEnvironment() {
     // in compositor constructor
     unsetenv("WAYLAND_DISPLAY");
     // in startCompositor
+    unsetenv("AP0G33_INSTANCE_SIGNATURE");
     unsetenv("HYPRLAND_INSTANCE_SIGNATURE");
 
     // in main
+    unsetenv("AP0G33_CMD");
     unsetenv("HYPRLAND_CMD");
     unsetenv("XDG_BACKEND");
     if (m_desktopEnvSet)
@@ -541,10 +552,10 @@ void CCompositor::cleanEnvironment() {
     if (m_aqBackend->hasSession() && !Env::envEnabled("HYPRLAND_NO_SD_VARS")) {
         const auto CMD =
 #ifdef USES_SYSTEMD
-            "systemctl --user unset-environment DISPLAY WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME PATH XDG_DATA_DIRS && hash "
+            "systemctl --user unset-environment DISPLAY WAYLAND_DISPLAY AP0G33_INSTANCE_SIGNATURE HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME PATH XDG_DATA_DIRS && hash "
             "dbus-update-activation-environment 2>/dev/null && "
 #endif
-            "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_QPA_PLATFORMTHEME PATH XDG_DATA_DIRS";
+            "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP AP0G33_INSTANCE_SIGNATURE HYPRLAND_INSTANCE_SIGNATURE QT_QPA_PLATFORMTHEME PATH XDG_DATA_DIRS";
         Config::Supplementary::executor()->spawn(CMD);
     }
 }
@@ -763,7 +774,7 @@ void CCompositor::initManagers(eManagersInitStage stage) {
 }
 
 void CCompositor::createLockFile() {
-    const auto    PATH = m_instancePath + "/hyprland.lock";
+    const auto    PATH = m_instancePath + "/ap0g33.lock";
 
     std::ofstream ofs(PATH, std::ios::trunc);
 
@@ -773,7 +784,7 @@ void CCompositor::createLockFile() {
 }
 
 void CCompositor::removeLockFile() {
-    const auto PATH = m_instancePath + "/hyprland.lock";
+    const auto PATH = m_instancePath + "/ap0g33.lock";
 
     if (std::filesystem::exists(PATH))
         std::filesystem::remove(PATH);
@@ -789,10 +800,10 @@ void CCompositor::startCompositor() {
         !Env::envEnabled("HYPRLAND_NO_SD_VARS")) {
         const auto CMD =
 #ifdef USES_SYSTEMD
-            "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME PATH XDG_DATA_DIRS && hash "
+            "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY AP0G33_INSTANCE_SIGNATURE HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP QT_QPA_PLATFORMTHEME PATH XDG_DATA_DIRS && hash "
             "dbus-update-activation-environment 2>/dev/null && "
 #endif
-            "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_QPA_PLATFORMTHEME PATH XDG_DATA_DIRS";
+            "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP AP0G33_INSTANCE_SIGNATURE HYPRLAND_INSTANCE_SIGNATURE QT_QPA_PLATFORMTHEME PATH XDG_DATA_DIRS";
         Config::Supplementary::executor()->spawn(CMD);
     }
 
@@ -880,7 +891,7 @@ void CCompositor::performUserChecks() {
 
     if (!*PNOCHECKXDG) {
         const auto CURRENT_DESKTOP_ENV = getenv("XDG_CURRENT_DESKTOP");
-        if (!CURRENT_DESKTOP_ENV || std::string{CURRENT_DESKTOP_ENV} != "Hyprland") {
+        if (!CURRENT_DESKTOP_ENV || (std::string{CURRENT_DESKTOP_ENV} != "AP0G33" && std::string{CURRENT_DESKTOP_ENV} != "Hyprland")) {
             Notification::overlay()->addNotification(
                 I18n::i18nEngine()->localize(I18n::TXT_KEY_NOTIF_EXTERNAL_XDG_DESKTOP, {{"value", CURRENT_DESKTOP_ENV ? CURRENT_DESKTOP_ENV : "unset"}}), CHyprColor{}, 15000,
                 ICON_WARNING);
@@ -932,10 +943,10 @@ void CCompositor::openSafeModeBox() {
 
             if (CACHE_HOME && CACHE_HOME[0] != '\0') {
                 reportPath += CACHE_HOME;
-                reportPath += "/hyprland/";
+                reportPath += "/ap0g33/";
             } else if (HOME && HOME[0] != '\0') {
                 reportPath += HOME;
-                reportPath += "/.cache/hyprland/";
+                reportPath += "/.cache/ap0g33/";
             }
             Hyprutils::OS::CProcess proc("xdg-open", {reportPath});
 

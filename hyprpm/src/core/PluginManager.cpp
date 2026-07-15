@@ -892,9 +892,11 @@ ePluginLoadStateReturn CPluginManager::ensurePluginsLoadState(bool forceReload) 
     }
 
     const auto HOME = getenv("HOME");
-    const auto HIS  = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+    auto       HIS  = getenv("AP0G33_INSTANCE_SIGNATURE");
+    if (!HIS)
+        HIS = getenv("HYPRLAND_INSTANCE_SIGNATURE");
     if (!HOME || !HIS) {
-        std::println(stderr, "PluginManager: no $HOME or $HYPRLAND_INSTANCE_SIGNATURE");
+        std::println(stderr, "PluginManager: no $HOME or $AP0G33_INSTANCE_SIGNATURE");
         return LOADSTATE_FAIL;
     }
     const auto HYPRPMPATH = DataState::getDataStatePath();

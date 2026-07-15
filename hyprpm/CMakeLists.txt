@@ -31,8 +31,15 @@ set_target_properties(hyprpm PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 target_link_libraries(hyprpm PUBLIC PkgConfig::hyprpm_deps glaze::glaze)
 
-# binary
+# binary (AP0G33: installed as ap0g33pm, hyprpm kept as compat symlink)
+set_target_properties(hyprpm PROPERTIES OUTPUT_NAME "ap0g33pm")
 install(TARGETS hyprpm)
+install(
+  CODE "execute_process( \
+        COMMAND ${CMAKE_COMMAND} -E create_symlink \
+        ap0g33pm \
+        \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/hyprpm\" \
+        )")
 
 # shell completions
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/hyprpm.bash

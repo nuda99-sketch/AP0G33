@@ -608,7 +608,7 @@ void CConfigManager::postConfigReload() {
         Log::logger->log(Log::DEBUG,
                          "Disabling stdout logs (debug.enable_stdout_logs = 0). "
                          "Further logs will be written to {}",
-                         g_pCompositor->m_instancePath + (ISDEBUG ? "/hyprlandd.log" : "/hyprland.log"));
+                         g_pCompositor->m_instancePath + (ISDEBUG ? "/ap0g33d.log" : "/ap0g33.log"));
 
     handlePluginLoads();
 

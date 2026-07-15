@@ -79,14 +79,15 @@ static int getUID() {
 }
 
 std::string getRuntimeDir() {
-    const auto XDG = getenv("XDG_RUNTIME_DIR");
+    const auto  XDG  = getenv("XDG_RUNTIME_DIR");
 
-    if (!XDG) {
-        const std::string USERID = std::to_string(getUID());
-        return "/run/user/" + USERID + "/hypr";
-    }
+    std::string base = XDG ? std::string{XDG} : "/run/user/" + std::to_string(getUID());
 
-    return std::string{XDG} + "/hypr";
+    // AP0G33: primary runtime dir is ap0g33; fall back to legacy hypr dir
+    if (std::filesystem::exists(base + "/ap0g33"))
+        return base + "/ap0g33";
+
+    return base + "/hypr";
 }
 
 static std::optional<uint64_t> toUInt64(const std::string_view str) {
@@ -509,10 +510,12 @@ int main(int argc, char** argv) {
 
         instanceSignature = INSTANCES[INSTANCENO].id;
     } else {
-        const auto ISIG = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+        auto ISIG = getenv("AP0G33_INSTANCE_SIGNATURE");
+        if (!ISIG)
+            ISIG = getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
         if (!ISIG) {
-            log("HYPRLAND_INSTANCE_SIGNATURE not set! (is hyprland running?)\n");
+            log("AP0G33_INSTANCE_SIGNATURE not set! (is AP0G33 running?)\n");
             return 1;
         }
 

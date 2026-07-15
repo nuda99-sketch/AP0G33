@@ -253,7 +253,11 @@ if command -v systemctl >/dev/null && systemctl list-unit-files seatd.service >/
 fi
 
 log "Done!"
-log "  Binary:        $PREFIX/bin/AP0G33  (symlinks: Hyprland, hyprland)"
-log "  Session file:  $PREFIX/share/wayland-sessions/hyprland.desktop (shows as 'AP0G33')"
-log "  Config:        ~/.config/hypr/hyprland.conf (auto-generated on first launch)"
-log "Log out and pick AP0G33 in your display manager, or run 'Hyprland' from a TTY."
+log "  Compositor:    $PREFIX/bin/AP0G33       (compat symlinks: Hyprland, hyprland)"
+log "  Control tool:  $PREFIX/bin/ap0g33ctl    (compat symlink: hyprctl)"
+log "  Plugin mgr:    $PREFIX/bin/ap0g33pm     (compat symlink: hyprpm)"
+log "  Launcher:      $PREFIX/bin/start-ap0g33 (compat symlink: start-hyprland)"
+log "  Session file:  $PREFIX/share/wayland-sessions/ap0g33.desktop"
+log "  Config:        ~/.config/ap0g33/ap0g33.lua (auto-generated on first launch;"
+log "                 an existing ~/.config/hypr/ setup is used automatically)"
+log "Log out and pick AP0G33 in your display manager, or run 'AP0G33' from a TTY."

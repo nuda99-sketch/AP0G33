@@ -1,5 +1,6 @@
 #include "HyprlandSocket.hpp"
 #include <cerrno>
+#include <filesystem>
 #include <pwd.h>
 #include <sys/socket.h>
 #include "../helpers/StringUtils.hpp"
@@ -36,14 +37,15 @@ static int getUID() {
 }
 
 static std::string getRuntimeDir() {
-    const auto XDG = getenv("XDG_RUNTIME_DIR");
+    const auto  XDG  = getenv("XDG_RUNTIME_DIR");
 
-    if (!XDG) {
-        const std::string USERID = std::to_string(getUID());
-        return "/run/user/" + USERID + "/hypr";
-    }
+    std::string base = XDG ? std::string{XDG} : "/run/user/" + std::to_string(getUID());
 
-    return std::string{XDG} + "/hypr";
+    // AP0G33: primary runtime dir is ap0g33; fall back to legacy hypr dir
+    if (std::filesystem::exists(base + "/ap0g33"))
+        return base + "/ap0g33";
+
+    return base + "/hypr";
 }
 
 std::string NHyprlandSocket::send(const std::string& cmd) {
@@ -54,10 +56,12 @@ std::string NHyprlandSocket::send(const std::string& cmd) {
         return "";
     }
 
-    const auto HIS = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+    auto HIS = getenv("AP0G33_INSTANCE_SIGNATURE");
+    if (!HIS)
+        HIS = getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
     if (!HIS) {
-        std::println("{}", failureString("HYPRLAND_INSTANCE_SIGNATURE was not set! (Is Hyprland running?) (3)"));
+        std::println("{}", failureString("AP0G33_INSTANCE_SIGNATURE was not set! (Is AP0G33 running?) (3)"));
         return "";
     }
 

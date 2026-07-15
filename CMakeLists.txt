@@ -403,7 +403,8 @@ else()
   else()
     message(STATUS "UWSM support is enabled (NO_UWSM not defined)...")
     install(FILES ${CMAKE_SOURCE_DIR}/systemd/hyprland-uwsm.desktop
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/wayland-sessions)
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/wayland-sessions
+            RENAME ap0g33-uwsm.desktop)
   endif()
 endif()
 
@@ -637,25 +638,34 @@ configure_file(
     @ONLY
 )
 install(FILES ${CMAKE_SOURCE_DIR}/example/hyprland.desktop
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/wayland-sessions)
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/wayland-sessions
+        RENAME ap0g33.desktop)
 
 # allow Hyprland to find assets
 add_compile_definitions(DATAROOTDIR="${CMAKE_INSTALL_FULL_DATAROOTDIR}")
 
-# installable assets
+# installable assets (AP0G33 primary dir + legacy hypr dir for compat)
 file(GLOB_RECURSE INSTALLABLE_ASSETS "assets/install/*")
+install(FILES ${INSTALLABLE_ASSETS}
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/ap0g33)
 install(FILES ${INSTALLABLE_ASSETS}
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/hypr)
 
 # default lua config
 install(FILES ${CMAKE_SOURCE_DIR}/example/hyprland.lua
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/ap0g33)
+install(FILES ${CMAKE_SOURCE_DIR}/example/hyprland.lua
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/hypr)
 
 # LuaLS stubs
 install(FILES ${CMAKE_SOURCE_DIR}/meta/hl.meta.lua
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/ap0g33/stubs)
+install(FILES ${CMAKE_SOURCE_DIR}/meta/hl.meta.lua
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/hypr/stubs)
 
-# portal config
+# portal config (ap0g33 for XDG_CURRENT_DESKTOP=AP0G33, hyprland kept for compat)
+install(FILES ${CMAKE_SOURCE_DIR}/assets/ap0g33-portals.conf
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/xdg-desktop-portal)
 install(FILES ${CMAKE_SOURCE_DIR}/assets/hyprland-portals.conf
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/xdg-desktop-portal)
 
@@ -663,9 +673,12 @@ install(FILES ${CMAKE_SOURCE_DIR}/assets/hyprland-portals.conf
 file(GLOB_RECURSE MANPAGES "docs/*.1")
 install(FILES ${MANPAGES} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
-# pkgconfig entry
+# pkgconfig entry (hyprland.pc kept for plugin ecosystem, ap0g33.pc as branded alias)
 install(FILES ${CMAKE_BINARY_DIR}/hyprland.pc
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/hyprland.pc
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig
+        RENAME ap0g33.pc)
 
 # protocol headers
 set(HEADERS_PROTO "${CMAKE_CURRENT_SOURCE_DIR}/protocols")

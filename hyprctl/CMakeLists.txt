@@ -33,8 +33,15 @@ endfunction()
 
 hyprprotocol(hw-protocols hyprpaper_core)
 
-# binary
+# binary (AP0G33: installed as ap0g33ctl, hyprctl kept as compat symlink)
+set_target_properties(hyprctl PROPERTIES OUTPUT_NAME "ap0g33ctl")
 install(TARGETS hyprctl)
+install(
+  CODE "execute_process( \
+        COMMAND ${CMAKE_COMMAND} -E create_symlink \
+        ap0g33ctl \
+        \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/hyprctl\" \
+        )")
 
 # shell completions
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/hyprctl.bash

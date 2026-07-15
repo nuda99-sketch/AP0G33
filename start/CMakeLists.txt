@@ -33,7 +33,15 @@ add_executable(start-hyprland ${SRCFILES})
 target_link_libraries(start-hyprland PUBLIC PkgConfig::starthyprland_deps)
 target_link_libraries(start-hyprland PUBLIC glaze::glaze)
 
+# AP0G33: installed as start-ap0g33, start-hyprland kept as compat symlink
+set_target_properties(start-hyprland PROPERTIES OUTPUT_NAME "start-ap0g33")
 install(TARGETS start-hyprland)
+install(
+  CODE "execute_process( \
+        COMMAND ${CMAKE_COMMAND} -E create_symlink \
+        start-ap0g33 \
+        \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/start-hyprland\" \
+        )")
 
 if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES DEBUG)
   set(CMAKE_EXECUTABLE_ENABLE_EXPORTS TRUE)

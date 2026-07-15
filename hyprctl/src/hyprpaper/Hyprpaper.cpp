@@ -69,17 +69,21 @@ static std::expected<void, std::string> doWallpaper(const std::string_view& RHS)
     if (!RTDIR || RTDIR[0] == '\0')
         return std::unexpected("can't send: no XDG_RUNTIME_DIR");
 
-    const auto HIS = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+    auto HIS = getenv("AP0G33_INSTANCE_SIGNATURE");
+    if (!HIS || HIS[0] == '\0')
+        HIS = getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
     if (!HIS || HIS[0] == '\0')
-        return std::unexpected("can't send: no HYPRLAND_INSTANCE_SIGNATURE (not running under hyprland)");
+        return std::unexpected("can't send: no AP0G33_INSTANCE_SIGNATURE (not running under AP0G33)");
 
     const auto PATH = getFullPath(PATH_RAW);
 
     if (!PATH)
         return std::unexpected(std::format("bad path: {}", PATH_RAW));
 
-    auto socketPath = RTDIR + "/hypr/"s + HIS + "/"s + SOCKET_NAME;
+    auto socketPath = RTDIR + "/ap0g33/"s + HIS + "/"s + SOCKET_NAME;
+    if (!std::filesystem::exists(socketPath))
+        socketPath = RTDIR + "/hypr/"s + HIS + "/"s + SOCKET_NAME;
 
     auto socket = Hyprwire::IClientSocket::open(socketPath);
 
@@ -144,12 +148,16 @@ static std::expected<void, std::string> doListActive() {
     if (!RTDIR || RTDIR[0] == '\0')
         return std::unexpected("can't send: no XDG_RUNTIME_DIR");
 
-    const auto HIS = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+    auto HIS = getenv("AP0G33_INSTANCE_SIGNATURE");
+    if (!HIS || HIS[0] == '\0')
+        HIS = getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
     if (!HIS || HIS[0] == '\0')
-        return std::unexpected("can't send: no HYPRLAND_INSTANCE_SIGNATURE (not running under hyprland)");
+        return std::unexpected("can't send: no AP0G33_INSTANCE_SIGNATURE (not running under AP0G33)");
 
-    auto socketPath = RTDIR + "/hypr/"s + HIS + "/"s + SOCKET_NAME;
+    auto socketPath = RTDIR + "/ap0g33/"s + HIS + "/"s + SOCKET_NAME;
+    if (!std::filesystem::exists(socketPath))
+        socketPath = RTDIR + "/hypr/"s + HIS + "/"s + SOCKET_NAME;
 
     auto socket = Hyprwire::IClientSocket::open(socketPath);
 
