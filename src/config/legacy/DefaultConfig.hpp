@@ -104,7 +104,6 @@ input {
 }
 
 dwindle {
-    pseudotile = true
     preserve_split = true
 }
 
@@ -128,7 +127,7 @@ bind = $mod, E, exec, $term -e btop
 bind = $mod, F, fullscreen,
 bind = $mod, V, togglefloating,
 bind = $mod, P, pseudo,
-bind = $mod, T, togglesplit,
+bind = $mod, T, layoutmsg, togglesplit
 bind = $mod, ESCAPE, exec, [ -f "$HOME/.config/hypr/hyprlock.conf" ] && hyprlock || hyprlock --config $sys/hypr/hyprlock.conf
 
 # focus: arrows + vim hjkl
@@ -201,7 +200,7 @@ bindel = , XF86MonBrightnessUp, exec, brightnessctl set 5%+
 bindel = , XF86MonBrightnessDown, exec, brightnessctl set 5%-
 
 # ------------------------------------------------------------- window rules
-windowrulev2 = float, class:(pavucontrol|nm-connection-editor|blueman-manager)
-windowrulev2 = float, title:(Open File|Save File|Open Folder)
-windowrulev2 = suppressevent maximize, class:.*
+windowrule = float, class:(pavucontrol|nm-connection-editor|blueman-manager)
+windowrule = float, title:(Open File|Save File|Open Folder)
+windowrule = suppressevent maximize, class:.*
 )#";
