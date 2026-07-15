@@ -1,0 +1,52 @@
+/* AP0G33 wofi — Tokyo Night */
+
+window {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    background: rgba(22, 22, 30, 0.95);
+    border: 2px solid #7aa2f7;
+    border-radius: 10px;
+    color: #c0caf5;
+}
+
+#input {
+    margin: 8px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    background: #1a1b26;
+    color: #c0caf5;
+}
+
+#input:focus {
+    outline: none;
+    border: 1px solid #7aa2f7;
+}
+
+#inner-box, #outer-box {
+    margin: 4px;
+    background: transparent;
+}
+
+#scroll {
+    margin: 0 4px;
+}
+
+#entry {
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+#entry:selected {
+    background: rgba(122, 162, 247, 0.25);
+    outline: none;
+}
+
+#entry:selected #text {
+    color: #7aa2f7;
+    font-weight: bold;
+}
+
+#text {
+    color: #c0caf5;
+}

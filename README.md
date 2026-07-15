@@ -29,6 +29,24 @@ Because the instance signature is exported under both names and the legacy socke
 
 Also: `install-kali.sh`, a one-shot build/install for Kali Rolling / Debian testing.
 
+## Pre-patched config (Tokyo Night)
+
+The installer ships a complete themed desktop, installed to your `~/.config` (existing files are backed up as `*.bak.<timestamp>`) and `/etc/skel` for new users:
+
+| Component | Tool | Notes |
+|---|---|---|
+| Bar | waybar | workspaces, window, clock, CPU / RAM / temp / disk, audio, network, battery, tray |
+| Launcher | wofi | `SUPER+R`, fuzzy matching |
+| Terminal | kitty | `SUPER+Q`, JetBrains Mono, translucent |
+| Wallpaper | hyprpaper | generated AP0G33 circuit wallpaper (`assets/wallpapers/`) |
+| Lock / idle | hyprlock + hypridle | `SUPER+ESC`; auto-lock 10 min, screen off 15 min |
+| Notifications | mako | themed, critical stays on screen |
+| Clipboard | cliphist | `SUPER+SHIFT+V` history picker |
+| Screenshots | grim + slurp | `Print` region, `SHIFT+Print` full, saved + copied |
+| Monitor | btop | `SUPER+E`, or click CPU/RAM in the bar |
+
+Keybinds: upstream defaults plus vim `SUPER+hjkl` focus / `SUPER+SHIFT+hjkl` move / `SUPER+ALT+hjkl` resize. Running in a VM? Uncomment the `VM MODE` block in `~/.config/ap0g33/ap0g33.conf` to drop blur/shadows/animations.
+
 ## Install (Kali Rolling)
 
 ```bash

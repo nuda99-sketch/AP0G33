@@ -1,0 +1,19 @@
+# AP0G33 mako — Tokyo Night
+font=JetBrains Mono 11
+background-color=#16161eee
+text-color=#c0caf5
+border-color=#7aa2f7
+border-size=2
+border-radius=8
+padding=10
+margin=8
+default-timeout=6000
+max-visible=5
+anchor=top-right
+
+[urgency=critical]
+border-color=#f7768e
+default-timeout=0
+
+[app-name=AP0G33]
+border-color=#bb9af7

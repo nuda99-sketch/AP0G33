@@ -115,7 +115,17 @@ apt_try \
     libxcb-res0-dev libxcb-xfixes0-dev libxcb-xinput-dev libxcb-shm0-dev \
     libxcb-util-dev libx11-xcb-dev libxcb-dri3-dev libxcb-present-dev \
     hyprland-protocols \
-    lua5.5 liblua5.5-dev
+    lua5.5 liblua5.5-dev \
+    libpam0g-dev libsdbus-c++-dev
+
+# desktop suite for the pre-patched AP0G33 config (Tokyo Night rice)
+apt_try \
+    waybar wofi kitty mako-notifier cliphist \
+    grim slurp wl-clipboard libnotify-bin \
+    btop brightnessctl playerctl pavucontrol \
+    pipewire-pulse wireplumber \
+    fonts-jetbrains-mono fonts-font-awesome \
+    mate-polkit sddm
 
 # ------------------------------------------------- 2. toolchain sanity
 GXX=""
@@ -239,6 +249,28 @@ fetch hyprwm/aquamarine "$AQUAMARINE_REV" "$d"
 cmake_build "$d"
 ldconfig
 
+# --------------------------- 4.5 satellite tools (wallpaper, lock, idle)
+# Latest release tags (our hypr* lib stack is current, so latest releases fit);
+# falls back to the main branch if the GitHub API is unavailable.
+gh_latest_tag() {
+    curl -fsSL "https://api.github.com/repos/$1/releases/latest" 2>/dev/null \
+        | grep -oP '"tag_name":\s*"\K[^"]+' || true
+}
+
+for sat in hyprpaper hyprlock hypridle; do
+    log "Building $sat"
+    d=$WORKDIR/$sat
+    tag=$(gh_latest_tag "hyprwm/$sat")
+    if [[ -n $tag ]]; then
+        fetch "hyprwm/$sat" "refs/tags/$tag" "$d"
+    else
+        warn "GitHub API unavailable, building $sat from main branch"
+        fetch "hyprwm/$sat" "refs/heads/main" "$d"
+    fi
+    cmake_build "$d"
+    ldconfig
+done
+
 # --------------------------------------------------- 5. AP0G33 itself
 log "Building AP0G33 (Hyprland $(cat "$SRCDIR/VERSION"))"
 cmake --no-warn-unused-cli -S "$SRCDIR" -B "$SRCDIR/build" -G Ninja \
@@ -248,10 +280,48 @@ cmake --build "$SRCDIR/build" -j "$JOBS"
 cmake --install "$SRCDIR/build"
 ldconfig
 
-# --------------------------------------------------------- 6. finishing
+# ------------------------------------- 6. pre-patched config + branding
+log "Installing wallpaper and pre-patched Tokyo Night config..."
+
+install -Dm644 "$SRCDIR/assets/wallpapers/ap0g33-circuit.png" \
+    /usr/local/share/ap0g33/wallpapers/ap0g33-circuit.png
+
+# install_cfg <src subdir> <dest .config subdir>
+TARGET_USER="${SUDO_USER:-root}"
+TARGET_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+
+install_cfg() {
+    local src="$SRCDIR/config/$1" destroot="$2"
+    [[ -d $src ]] || { warn "config/$1 missing in repo, skipping"; return 0; }
+    while IFS= read -r -d '' f; do
+        local rel="${f#"$src"/}" dest="$destroot/$rel"
+        if [[ -f $dest ]] && ! cmp -s "$f" "$dest"; then
+            cp "$dest" "$dest.bak.$(date +%s)"
+            warn "backed up existing $dest"
+        fi
+        install -Dm644 "$f" "$dest"
+    done < <(find "$src" -type f -print0)
+}
+
+for pair in "ap0g33:ap0g33" "hypr:hypr" "waybar:waybar" "wofi:wofi" "kitty:kitty" "mako:mako"; do
+    install_cfg "${pair%%:*}" "$TARGET_HOME/.config/${pair##*:}"
+    install_cfg "${pair%%:*}" "/etc/skel/.config/${pair##*:}"
+done
+chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.config" 2>/dev/null || true
+log "Config installed for user '$TARGET_USER' (existing files backed up as *.bak.<timestamp>)"
+
+# --------------------------------------------------------- 7. finishing
 if command -v systemctl >/dev/null && systemctl list-unit-files seatd.service >/dev/null 2>&1; then
     systemctl enable --now seatd.service || true
     warn "seatd enabled. Add your user to the 'video' and '_seatd'/'seat' group if not using logind."
+fi
+
+# display manager: don't fight an existing one
+if systemctl is-enabled lightdm gdm3 2>/dev/null | grep -q enabled; then
+    warn "Existing display manager detected — AP0G33 will appear in its session list."
+elif command -v sddm >/dev/null; then
+    systemctl enable sddm || true
+    log "SDDM enabled — pick the AP0G33 session on the login screen."
 fi
 
 log "Done!"
@@ -260,6 +330,10 @@ log "  Control tool:  $PREFIX/bin/ap0g33ctl    (compat symlink: hyprctl)"
 log "  Plugin mgr:    $PREFIX/bin/ap0g33pm     (compat symlink: hyprpm)"
 log "  Launcher:      $PREFIX/bin/start-ap0g33 (compat symlink: start-hyprland)"
 log "  Session file:  $PREFIX/share/wayland-sessions/ap0g33.desktop"
-log "  Config:        ~/.config/ap0g33/ap0g33.lua (auto-generated on first launch;"
-log "                 an existing ~/.config/hypr/ setup is used automatically)"
+log "  Config:        ~/.config/ap0g33/ap0g33.conf (pre-patched Tokyo Night rice:"
+log "                 waybar + wofi + kitty + mako + hyprpaper/hyprlock/hypridle)"
+log "  Wallpaper:     /usr/local/share/ap0g33/wallpapers/ap0g33-circuit.png"
+log "  Keys:          SUPER+Q terminal | SUPER+R launcher | SUPER+hjkl focus"
+log "                 SUPER+ESC lock | Print screenshot | SUPER+SHIFT+V clipboard"
+log "  VM users:      uncomment the 'VM MODE' block in ap0g33.conf"
 log "Log out and pick AP0G33 in your display manager, or run 'AP0G33' from a TTY."
