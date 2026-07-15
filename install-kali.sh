@@ -354,6 +354,21 @@ if command -v systemctl >/dev/null && systemctl list-unit-files seatd.service >/
     warn "seatd enabled. Add your user to the 'video' and '_seatd'/'seat' group if not using logind."
 fi
 
+# hardware quirks: Realtek rtw88 wifi firmware crashes ("failed to send h2c
+# command") on power-state flips; disable the fragile power-save paths
+if lsmod 2>/dev/null | grep -q '^rtw88' || lspci 2>/dev/null | grep -qi 'RTL88.*CE'; then
+    warn "Realtek rtw88 wifi detected — applying firmware-crash quirks"
+    cat > /etc/modprobe.d/rtw88-quirks.conf <<'EOF'
+options rtw88_pci disable_aspm=1
+options rtw88_core disable_lps_deep=y
+EOF
+    if [[ -d /etc/NetworkManager ]]; then
+        mkdir -p /etc/NetworkManager/conf.d
+        printf '[connection]\nwifi.powersave = 2\n' > /etc/NetworkManager/conf.d/wifi-powersave-off.conf
+    fi
+    warn "rtw88 quirks written (modprobe.d + NetworkManager) — take effect on reboot"
+fi
+
 # session files: DMs only scan /usr/share/wayland-sessions, never /usr/local
 mkdir -p /usr/share/wayland-sessions
 for f in "$PREFIX"/share/wayland-sessions/ap0g33*.desktop; do
