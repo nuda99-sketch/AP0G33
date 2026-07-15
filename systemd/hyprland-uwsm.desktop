@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=AP0G33 (uwsm-managed)
+Comment=An intelligent dynamic tiling Wayland compositor (Hyprland port for Debian/Kali)
+Exec=uwsm start -e -D Hyprland hyprland.desktop
+TryExec=uwsm
+DesktopNames=Hyprland
+Type=Application

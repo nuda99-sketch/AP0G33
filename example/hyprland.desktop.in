@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=AP0G33
+Comment=An intelligent dynamic tiling Wayland compositor (Hyprland port for Debian/Kali)
+Exec=@PREFIX@/@CMAKE_INSTALL_BINDIR@/start-hyprland
+Type=Application
+DesktopNames=Hyprland
+Keywords=tiling;wayland;compositor;
