@@ -84,13 +84,22 @@ log "Installing apt packages..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 
-# apt_try <pkg...> — install what exists, warn about what doesn't
+# apt_try <pkg...> — install what has a real candidate, warn about the rest.
+# Never aborts the script: a failed batch is retried package-by-package.
 apt_try() {
-    local ok=() missing=()
+    local ok=() missing=() p cand
     for p in "$@"; do
-        if apt-cache show "$p" >/dev/null 2>&1; then ok+=("$p"); else missing+=("$p"); fi
+        cand=$(apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/{print $2}')
+        if [[ -n $cand && $cand != "(none)" ]]; then ok+=("$p"); else missing+=("$p"); fi
     done
-    ((${#ok[@]})) && apt-get install -y --no-install-recommends "${ok[@]}"
+    if ((${#ok[@]})); then
+        if ! apt-get install -y --no-install-recommends "${ok[@]}"; then
+            warn "batch apt install failed — retrying packages individually"
+            for p in "${ok[@]}"; do
+                apt-get install -y --no-install-recommends "$p" || warn "apt failed, skipping: $p"
+            done
+        fi
+    fi
     ((${#missing[@]})) && warn "Not in apt (will source-build or skip): ${missing[*]}"
     return 0
 }
@@ -124,8 +133,23 @@ apt_try \
     grim slurp wl-clipboard libnotify-bin \
     btop brightnessctl playerctl pavucontrol \
     pipewire-pulse wireplumber \
-    fonts-jetbrains-mono fonts-font-awesome \
+    fonts-jetbrains-mono fonts-font-awesome unzip \
     mate-polkit sddm
+
+# JetBrains Mono fallback: fetch from upstream if apt couldn't provide it
+if ! fc-list 2>/dev/null | grep -qi "jetbrains"; then
+    warn "JetBrains Mono not found via apt — fetching from JetBrains GitHub"
+    if curl -fsSL -o /tmp/jbmono.zip \
+        "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip"; then
+        mkdir -p /usr/local/share/fonts/ap0g33
+        unzip -o -q -j /tmp/jbmono.zip "fonts/ttf/*.ttf" -d /usr/local/share/fonts/ap0g33
+        fc-cache -f >/dev/null 2>&1 || true
+        rm -f /tmp/jbmono.zip
+        log "JetBrains Mono installed to /usr/local/share/fonts/ap0g33"
+    else
+        warn "Couldn't fetch JetBrains Mono — configs fall back to the system monospace font"
+    fi
+fi
 
 # ------------------------------------------------- 2. toolchain sanity
 GXX=""
