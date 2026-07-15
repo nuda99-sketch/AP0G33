@@ -25,6 +25,8 @@ HYPRCURSOR_REV=39435900785d0c560c6ae8777d29f28617d031ef
 HYPRGRAPHICS_REV=c6e7b9f673f4360bc813d3dc75028f75ee88d3f8
 HYPRWIRE_REV=85148a8e612808cf5ddb25d0b3c5840f3498a7dc
 AQUAMARINE_REV=6d6e2384f381def4ea4ea81543cba4bbdac72457
+HYPRTOOLKIT_REV=bdba25ced39ea39ab004a8f31593ba0b0ff1ca35
+HYPRLAND_GUIUTILS_REV=5ba080ee036c30cb2485f2647ff8a61f7aa08178
 
 # minimum versions required by Hyprland 0.55.0 (from CMakeLists.txt)
 MIN_XKBCOMMON=1.11.0
@@ -47,9 +49,10 @@ die()  { printf '\033[1;31m[AP0G33]\033[0m %s\n' "$*" >&2; exit 1; }
 pc_ok() { pkg-config --atleast-version="$2" "$1" 2>/dev/null; }
 
 fetch() { # fetch <github owner/repo> <rev> <destdir>
-    local repo=$1 rev=$2 dest=$3
+    local repo=$1 rev=$2 dest=$3 short=$2
     if [[ -d $dest ]]; then rm -rf "$dest"; fi
-    log "Fetching $repo @ ${rev:0:12}"
+    [[ ${#rev} -eq 40 ]] && short=${rev:0:12}
+    log "Fetching $repo @ $short"
     mkdir -p "$dest"
     curl -fsSL "https://github.com/$repo/archive/$rev.tar.gz" | tar xz --strip-components=1 -C "$dest"
 }
@@ -125,7 +128,8 @@ apt_try \
     libxcb-util-dev libx11-xcb-dev libxcb-dri3-dev libxcb-present-dev \
     hyprland-protocols \
     lua5.5 liblua5.5-dev \
-    libpam0g-dev libsdbus-c++-dev
+    libpam0g-dev libsdbus-c++-dev \
+    libiniparser-dev libabsl-dev
 
 # desktop suite for the pre-patched AP0G33 config (Tokyo Night rice)
 apt_try \
@@ -273,6 +277,20 @@ fetch hyprwm/aquamarine "$AQUAMARINE_REV" "$d"
 cmake_build "$d"
 ldconfig
 
+log "Building hyprtoolkit (GUI toolkit for hypr satellite apps)"
+d=$WORKDIR/hyprtoolkit
+fetch hyprwm/hyprtoolkit "$HYPRTOOLKIT_REV" "$d"
+cmake_build "$d"
+ldconfig
+
+# hyprland-dialog (ANR dialogs; silences the startup guiutils warning)
+log "Building hyprland-guiutils"
+d=$WORKDIR/hyprland-guiutils
+if ! ( fetch hyprwm/hyprland-guiutils "$HYPRLAND_GUIUTILS_REV" "$d" && cmake_build "$d" ); then
+    warn "hyprland-guiutils build failed — continuing (only ANR dialogs affected)"
+fi
+ldconfig
+
 # --------------------------- 4.5 satellite tools (wallpaper, lock, idle)
 # Latest release tags (our hypr* lib stack is current, so latest releases fit);
 # falls back to the main branch if the GitHub API is unavailable.
@@ -285,13 +303,11 @@ for sat in hyprpaper hyprlock hypridle; do
     log "Building $sat"
     d=$WORKDIR/$sat
     tag=$(gh_latest_tag "hyprwm/$sat")
-    if [[ -n $tag ]]; then
-        fetch "hyprwm/$sat" "refs/tags/$tag" "$d"
-    else
-        warn "GitHub API unavailable, building $sat from main branch"
-        fetch "hyprwm/$sat" "refs/heads/main" "$d"
+    ref="refs/heads/main"
+    [[ -n $tag ]] && ref="refs/tags/$tag"
+    if ! ( fetch "hyprwm/$sat" "$ref" "$d" && cmake_build "$d" ); then
+        warn "$sat build failed — continuing without it (send the log above to fix)"
     fi
-    cmake_build "$d"
     ldconfig
 done
 
