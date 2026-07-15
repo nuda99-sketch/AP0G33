@@ -33,8 +33,10 @@ MIN_WAYLAND_PROTOCOLS=1.49
 MIN_LIBINPUT=1.29
 MIN_CMAKE=3.30
 
-export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:$PREFIX/lib/$(uname -m)-linux-gnu/pkgconfig:$PREFIX/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-export PATH="$PREFIX/bin:$PATH"
+ARCH_TRIPLET="$(uname -m)-linux-gnu"
+PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:$PREFIX/lib/$ARCH_TRIPLET/pkgconfig:$PREFIX/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+PATH="$PREFIX/bin:$PATH"
+export PKG_CONFIG_PATH PATH
 
 # ----------------------------------------------------------------- helpers
 log()  { printf '\033[1;32m[AP0G33]\033[0m %s\n' "$*"; }
