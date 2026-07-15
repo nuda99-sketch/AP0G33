@@ -29,9 +29,9 @@ Because the instance signature is exported under both names and the legacy socke
 
 Also: `install-kali.sh`, a one-shot build/install for Kali Rolling / Debian testing.
 
-## Pre-patched config (Tokyo Night)
+## Ready to use from first boot (Tokyo Night)
 
-The installer ships a complete themed desktop, installed to your `~/.config` (existing files are backed up as `*.bak.<timestamp>`) and `/etc/skel` for new users:
+No dotfile setup needed. The Tokyo Night config is **embedded in the compositor** — on first launch it generates `~/.config/ap0g33/ap0g33.conf`, and all satellite tools read the system theme in `/usr/local/share/ap0g33/` until you create your own `~/.config` overrides (which always win):
 
 | Component | Tool | Notes |
 |---|---|---|
@@ -46,6 +46,8 @@ The installer ships a complete themed desktop, installed to your `~/.config` (ex
 | Monitor | btop | `SUPER+E`, or click CPU/RAM in the bar |
 
 Keybinds: upstream defaults plus vim `SUPER+hjkl` focus / `SUPER+SHIFT+hjkl` move / `SUPER+ALT+hjkl` resize. Running in a VM? Uncomment the `VM MODE` block in `~/.config/ap0g33/ap0g33.conf` to drop blur/shadows/animations.
+
+To customize a component, copy its system config from `/usr/local/share/ap0g33/` into the matching `~/.config/` location and edit — the tools pick your copy up on next launch.
 
 ## Install (Kali Rolling)
 

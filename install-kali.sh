@@ -280,35 +280,33 @@ cmake --build "$SRCDIR/build" -j "$JOBS"
 cmake --install "$SRCDIR/build"
 ldconfig
 
-# ------------------------------------- 6. pre-patched config + branding
-log "Installing wallpaper and pre-patched Tokyo Night config..."
+# ------------------------------------- 6. system-wide theme (zero per-user files)
+# Ready to use from first boot: the compositor generates its own Tokyo Night
+# config on first launch (embedded default), and all satellite tools read
+# these system paths unless the user creates their own ~/.config overrides.
+log "Installing wallpaper and system-wide Tokyo Night theme..."
 
-install -Dm644 "$SRCDIR/assets/wallpapers/ap0g33-circuit.png" \
-    /usr/local/share/ap0g33/wallpapers/ap0g33-circuit.png
+SYS=/usr/local/share/ap0g33
 
-# install_cfg <src subdir> <dest .config subdir>
-TARGET_USER="${SUDO_USER:-root}"
-TARGET_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+install -Dm644 "$SRCDIR/assets/wallpapers/ap0g33-circuit.png" "$SYS/wallpapers/ap0g33-circuit.png"
 
-install_cfg() {
-    local src="$SRCDIR/config/$1" destroot="$2"
-    [[ -d $src ]] || { warn "config/$1 missing in repo, skipping"; return 0; }
-    while IFS= read -r -d '' f; do
-        local rel="${f#"$src"/}" dest="$destroot/$rel"
-        if [[ -f $dest ]] && ! cmp -s "$f" "$dest"; then
-            cp "$dest" "$dest.bak.$(date +%s)"
-            warn "backed up existing $dest"
-        fi
-        install -Dm644 "$f" "$dest"
-    done < <(find "$src" -type f -print0)
-}
+# waybar + kitty read these via XDG_CONFIG_DIRS (set by the default config)
+install -Dm644 "$SRCDIR/config/waybar/config.jsonc" "$SYS/xdg/waybar/config"
+install -Dm644 "$SRCDIR/config/waybar/style.css"    "$SYS/xdg/waybar/style.css"
+install -Dm644 "$SRCDIR/config/kitty/kitty.conf"    "$SYS/xdg/kitty/kitty.conf"
 
-for pair in "ap0g33:ap0g33" "hypr:hypr" "waybar:waybar" "wofi:wofi" "kitty:kitty" "mako:mako"; do
-    install_cfg "${pair%%:*}" "$TARGET_HOME/.config/${pair##*:}"
-    install_cfg "${pair%%:*}" "/etc/skel/.config/${pair##*:}"
-done
-chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.config" 2>/dev/null || true
-log "Config installed for user '$TARGET_USER' (existing files backed up as *.bak.<timestamp>)"
+# wofi / mako / hypr satellites get pointed here explicitly by the default config
+install -Dm644 "$SRCDIR/config/wofi/config"         "$SYS/wofi/config"
+install -Dm644 "$SRCDIR/config/wofi/style.css"      "$SYS/wofi/style.css"
+install -Dm644 "$SRCDIR/config/mako/config"         "$SYS/mako/config"
+install -Dm644 "$SRCDIR/config/hypr/hyprpaper.conf" "$SYS/hypr/hyprpaper.conf"
+install -Dm644 "$SRCDIR/config/hypr/hyprlock.conf"  "$SYS/hypr/hyprlock.conf"
+install -Dm644 "$SRCDIR/config/hypr/hypridle.conf"  "$SYS/hypr/hypridle.conf"
+
+# reference copy of the compositor config (also embedded as the generated default)
+install -Dm644 "$SRCDIR/config/ap0g33/ap0g33.conf"  "$SYS/ap0g33.conf.example"
+
+log "Theme installed to $SYS — no files written to any user's home."
 
 # --------------------------------------------------------- 7. finishing
 if command -v systemctl >/dev/null && systemctl list-unit-files seatd.service >/dev/null 2>&1; then
@@ -330,8 +328,9 @@ log "  Control tool:  $PREFIX/bin/ap0g33ctl    (compat symlink: hyprctl)"
 log "  Plugin mgr:    $PREFIX/bin/ap0g33pm     (compat symlink: hyprpm)"
 log "  Launcher:      $PREFIX/bin/start-ap0g33 (compat symlink: start-hyprland)"
 log "  Session file:  $PREFIX/share/wayland-sessions/ap0g33.desktop"
-log "  Config:        ~/.config/ap0g33/ap0g33.conf (pre-patched Tokyo Night rice:"
-log "                 waybar + wofi + kitty + mako + hyprpaper/hyprlock/hypridle)"
+log "  Config:        auto-generated at ~/.config/ap0g33/ap0g33.conf on first launch"
+log "                 (Tokyo Night rice, works with zero setup; theme files in"
+log "                 /usr/local/share/ap0g33 — copy to ~/.config to customize)"
 log "  Wallpaper:     /usr/local/share/ap0g33/wallpapers/ap0g33-circuit.png"
 log "  Keys:          SUPER+Q terminal | SUPER+R launcher | SUPER+hjkl focus"
 log "                 SUPER+ESC lock | Print screenshot | SUPER+SHIFT+V clipboard"

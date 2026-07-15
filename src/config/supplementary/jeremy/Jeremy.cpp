@@ -61,8 +61,9 @@ std::expected<SConfigStateReply, std::string> Jeremy::getMainConfigPath() {
         else if (CONF_PATHS.first.has_value())
             return SConfigStateReply{.path = CONF_PATHS.first.value(), .type = CONFIG_TYPE_REGULAR};
         else if (AP0G33_DIR.has_value()) {
-            // nothing exists yet: default config gets generated at the AP0G33 path
-            return SConfigStateReply{.path = (*AP0G33_DIR / "ap0g33.lua").string(), .type = CONFIG_TYPE_REGULAR};
+            // nothing exists yet: the shipped Tokyo Night default (DefaultConfig.hpp)
+            // gets generated at the AP0G33 path, classic .conf syntax
+            return SConfigStateReply{.path = (*AP0G33_DIR / "ap0g33.conf").string(), .type = CONFIG_TYPE_REGULAR};
         } else if (LUA_PATHS.second.has_value()) {
             auto CONFIGPATH = Hyprutils::Path::fullConfigPath(LUA_PATHS.second.value(), ISDEBUG ? "hyprlandd" : "hyprland", "lua");
             return SConfigStateReply{.path = CONFIGPATH, .type = CONFIG_TYPE_REGULAR};
