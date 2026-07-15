@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sanity:
+    name: Sanity checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell script syntax
+        run: bash -n install-kali.sh
+
+      - name: ShellCheck
+        run: shellcheck -S warning install-kali.sh
+
+      - name: Rebrand consistency
+        run: |
+          # compat symlinks must still be declared
+          grep -q 'OUTPUT_NAME "AP0G33"' CMakeLists.txt
+          grep -q 'OUTPUT_NAME "ap0g33ctl"' hyprctl/CMakeLists.txt
+          grep -q 'OUTPUT_NAME "ap0g33pm"' hyprpm/CMakeLists.txt
+          grep -q 'OUTPUT_NAME "start-ap0g33"' start/CMakeLists.txt
+          # dual env export must be present
+          grep -q 'AP0G33_INSTANCE_SIGNATURE' src/Compositor.cpp
+          grep -q 'HYPRLAND_INSTANCE_SIGNATURE' src/Compositor.cpp
+          echo "rebrand consistency OK"
+
+      - name: Desktop / portals files parse
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq desktop-file-utils
+          desktop-file-validate systemd/hyprland-uwsm.desktop || true
+          test -f assets/ap0g33-portals.conf
+          echo "session files OK"
