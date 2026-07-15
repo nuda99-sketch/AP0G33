@@ -832,13 +832,12 @@ bool truthy(const std::string& str) {
     if (str == "1"sv)
         return true;
 
-    // clang-format off
-    auto str_view = str | std::views::transform([](unsigned char ch) -> char {
-        return sc<char>(std::tolower(ch));
-    });
+    // AP0G33: avoid std::ranges::starts_with (missing on Debian's libstdc++);
+    // lowercase the first few chars and use string::starts_with instead
+    std::string lower;
+    lower.reserve(4);
+    for (size_t i = 0; i < str.size() && i < 4; ++i)
+        lower += sc<char>(std::tolower(sc<unsigned char>(str[i])));
 
-    return [&](auto&&... prefixes) -> bool {
-        return (... || std::ranges::starts_with(str_view, prefixes));
-    }("true"sv, "yes"sv, "on"sv);
-    // clang-format on
+    return lower.starts_with("true") || lower.starts_with("yes") || lower.starts_with("on");
 }
