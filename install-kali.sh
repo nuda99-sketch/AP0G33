@@ -354,6 +354,13 @@ if command -v systemctl >/dev/null && systemctl list-unit-files seatd.service >/
     warn "seatd enabled. Add your user to the 'video' and '_seatd'/'seat' group if not using logind."
 fi
 
+# session files: DMs only scan /usr/share/wayland-sessions, never /usr/local
+mkdir -p /usr/share/wayland-sessions
+for f in "$PREFIX"/share/wayland-sessions/ap0g33*.desktop; do
+    [[ -f $f ]] && install -m644 "$f" /usr/share/wayland-sessions/
+done
+log "Session entries published to /usr/share/wayland-sessions"
+
 # display manager: don't fight an existing one
 if systemctl is-enabled lightdm gdm3 2>/dev/null | grep -q enabled; then
     warn "Existing display manager detected — AP0G33 will appear in its session list."
